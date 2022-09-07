@@ -4,6 +4,13 @@
     path: /tmp/opkg-lists
   register: _opkg_lists
 
+- name: check if opkg cache dir is populated
+  command: ls /tmp/opkg-lists
+  check_mode: false
+  changed_when: false
+  register: _opkg_cache_dir
+  when: opkg_lists.stat.exists
+
 - name: get current system time
   command: date +%s
   register: _epoch
@@ -18,6 +25,7 @@
   register: _update
   when: not _opkg_lists.stat.exists or
       _epoch.stdout|int - _opkg_lists.stat.mtime > 86400
+      not _opkg_cache_dir.stdout_lines
   failed_when: not _opkg_lists.stat.exists and _update.failed
   changed_when: not _update.failed
 
